@@ -7,12 +7,20 @@ import {
   Param,
   Body,
   UseFilters,
+  Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { OrderService } from './order.service';
 import { Order } from './entities/order.entity';
 import { HttpExceptionFilter } from 'src/exception/http-exception.filter';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { CreateOrderDto } from './dto/create-order.dto';
 
 @ApiTags('orders')
 @Controller('api/v1/orders')
@@ -28,6 +36,7 @@ export class OrderController {
     description: 'The order has been successfully created.',
   })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
+  @ApiBody({ type: CreateOrderDto }) // Document the request body
   async create(@Body() order: Partial<Order>): Promise<Order> {
     return this.orderService.create(order);
   }
@@ -57,6 +66,27 @@ export class OrderController {
       throw new NotFoundException(`Order with ID ${orderId} not found.`);
     }
     return order;
+  }
+
+  @Get('/by-user/:userId')
+  @ApiOperation({ summary: 'Fetch orders by user ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully fetched orders for the specified user.',
+  })
+  @ApiQuery({
+    name: 'date',
+    required: false,
+    description: 'Optional date filter',
+  })
+  async findOrdersByUserId(
+    @Param('userId') userId: string,
+    @Query('date') date?: string,
+  ): Promise<Order[]> {
+    return this.orderService.findOrdersByUserIdAndDate(
+      userId,
+      date ? new Date(date) : undefined,
+    );
   }
 
   // Update an existing order by ID

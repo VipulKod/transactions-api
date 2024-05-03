@@ -14,8 +14,21 @@ export class OrderService {
   ) {}
 
   // Fetches all orders from the repository
-  async findAll(): Promise<Order[]> {
-    return await this.orderRepository.find();
+  async findAll(): Promise<any[]> {
+    return this.orderRepository
+      .createQueryBuilder('order')
+      .leftJoinAndSelect('order.user', 'user')
+      .select([
+        'order.order_id AS order_id',
+        'order.order_type AS order_type',
+        'order.unit_price AS unit_price',
+        'order.quantity AS quantity',
+        'order.status AS status',
+        'order.original_quantity AS original_quantity',
+        'order.created_at AS created_at',
+        'user.user_id AS user_id',
+      ])
+      .getRawMany();
   }
 
   // Finds a single order by its ID
@@ -24,7 +37,26 @@ export class OrderService {
       where: {
         order_id: order_id,
       },
+      relations: ['user'],
     });
+  }
+
+  async findOrdersByUserIdAndDate(
+    userId: string,
+    date?: Date,
+  ): Promise<Order[]> {
+    const query = this.orderRepository.createQueryBuilder('order');
+
+    // Add a condition to filter by userId
+    query.where('order.user_id = :userId', { userId });
+
+    // Optionally filter by date
+    if (date) {
+      query.andWhere('order.created_at <= :date', { date });
+    }
+
+    // Execute the query
+    return query.getMany();
   }
 
   // Finds an order that matches the given order type and unit price
@@ -35,8 +67,8 @@ export class OrderService {
     return await this.orderRepository.findOne({
       where: {
         order_type:
-          order_type === OrderType.BUY? OrderType.SELL : OrderType.BUY,
-          unit_price: unit_price,
+          order_type === OrderType.BUY ? OrderType.SELL : OrderType.BUY,
+        unit_price: unit_price,
       },
     });
   }
@@ -44,6 +76,7 @@ export class OrderService {
   // Creates a new order, sets its status to OPEN, saves it to the repository, and emits an event
   async create(order: Partial<Order>): Promise<Order> {
     order.status = OrderStatus.OPEN;
+    order.original_quantity = order.quantity;
     const newOrder = this.orderRepository.create(order);
     const savedOrder = await this.orderRepository.save(newOrder);
     this.eventEmitter.emit(

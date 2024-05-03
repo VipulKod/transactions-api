@@ -61,4 +61,8 @@ export class Order {
   // Timestamp when the order was created
   @CreateDateColumn()
   created_at: Date;
+
+  // To store the original quantity
+  @Column({ type: 'int' })
+  original_quantity: number;
 }

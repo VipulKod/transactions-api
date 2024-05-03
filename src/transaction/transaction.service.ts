@@ -13,10 +13,29 @@ export class TransactionService {
   ) {}
 
   // Fetches all transactions from the repository, including related buy and sell orders
-  async findAll(): Promise<Transaction[]> {
-    return await this.transactionRepository.find({
-      relations: ['buy_order', 'sell_order'],
+  async findAll(): Promise<any> {
+    const transactions = await this.transactionRepository.find({
+      relations: [
+        'buy_order',
+        'sell_order',
+        'buy_order.user',
+        'sell_order.user',
+      ],
     });
+
+    return transactions.map((transaction) => ({
+      ...transaction,
+      buy_order: {
+        order_id: transaction.buy_order.order_id,
+        status: transaction.buy_order.status,
+        user: transaction.buy_order.user.user_id,
+      },
+      sell_order: {
+        order_id: transaction.sell_order.order_id,
+        status: transaction.sell_order.status,
+        user: transaction.sell_order.user.user_id,
+      },
+    }));
   }
 
   // Finds a single transaction by its ID
@@ -25,6 +44,12 @@ export class TransactionService {
       where: {
         transaction_id: transaction_id,
       },
+      relations: [
+        'buy_order',
+        'sell_order',
+        'buy_order.user',
+        'sell_order.user',
+      ],
     });
   }
 
@@ -40,7 +65,7 @@ export class TransactionService {
     const sellOrder = await this.orderRepository.findOne(sellOrderId);
 
     // Checks if both orders exist
-    if (!buyOrder ||!sellOrder) {
+    if (!buyOrder || !sellOrder) {
       throw new Error('Buy or sell order not found');
     }
 
