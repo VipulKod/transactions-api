@@ -55,7 +55,6 @@ export class OrderMatchingService {
   
       // Update the seller's order status and quantity based on the transaction outcome
       if (transactionQuantity === matchingOrder.quantity) {
-        // If the selling and buying quantities match, mark the transaction as complete
         await this.orderService.update(matchingOrder.order_id, {
           status: OrderStatus.COMPLETED,
           quantity: 0,

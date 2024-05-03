@@ -43,7 +43,7 @@ export class OrderService {
 
   async findOrdersByUserIdAndDate(
     userId: string,
-    date?: Date,
+    date?: string,
   ): Promise<Order[]> {
     const query = this.orderRepository.createQueryBuilder('order');
 
@@ -52,7 +52,13 @@ export class OrderService {
 
     // Optionally filter by date
     if (date) {
-      query.andWhere('order.created_at <= :date', { date });
+      // Parse the date string into day, month, and year components
+      const [day, month, year] = date.split('/');
+      // Construct a new Date object from the parsed components
+      const parsedDate = new Date(parseInt(year), month as any, day as any); // Note: months are 0-indexed in JavaScript
+      // Use the parsed date for the query
+      console.log(parsedDate);
+      query.andWhere('order.created_at <= :date', { date: parsedDate });
     }
 
     // Execute the query

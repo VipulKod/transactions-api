@@ -9,13 +9,7 @@ import {
   UseFilters,
   Query,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBody,
-  ApiQuery,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiQuery } from '@nestjs/swagger';
 import { OrderService } from './order.service';
 import { Order } from './entities/order.entity';
 import { HttpExceptionFilter } from 'src/exception/http-exception.filter';
@@ -68,6 +62,7 @@ export class OrderController {
     return order;
   }
 
+  
   @Get('/by-user/:userId')
   @ApiOperation({ summary: 'Fetch orders by user ID' })
   @ApiResponse({
@@ -78,15 +73,13 @@ export class OrderController {
     name: 'date',
     required: false,
     description: 'Optional date filter',
+    example: '03/05/2024', // Example value in dd/mm/yyyy format
   })
   async findOrdersByUserId(
     @Param('userId') userId: string,
-    @Query('date') date?: string,
+    @Query('date') date?: string, // Make the date parameter optional
   ): Promise<Order[]> {
-    return this.orderService.findOrdersByUserIdAndDate(
-      userId,
-      date ? new Date(date) : undefined,
-    );
+    return this.orderService.findOrdersByUserIdAndDate(userId, date? date : undefined);
   }
 
   // Update an existing order by ID
@@ -113,4 +106,5 @@ export class OrderController {
   async delete(@Param('order_id') orderId: string): Promise<void> {
     return await this.orderService.delete(orderId);
   }
+
 }
